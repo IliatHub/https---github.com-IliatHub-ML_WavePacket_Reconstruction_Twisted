@@ -1,9 +1,11 @@
-def single_state_prop(Jmax, J0M0, I, P, tdef):
+def single_state_prop(Jmax, J0M0, I, P, taup, tdef):
 
     import math
     import numpy as np
     import scipy.sparse as sparse
     import scipy.linalg as linalg
+    from scipy.sparse.linalg import expm_multiply
+    from scipy.io import mmread, mmwrite
 
     def superindex(Jmax):
         """
@@ -29,31 +31,28 @@ def single_state_prop(Jmax, J0M0, I, P, tdef):
         psi0[index] = 1
         return psi0
 
-    def costheta(N, v):
+    def mats():
         """
-        Generates the matrix representation 
-        of cos^2(theta).
+        Load the matrix representations of the trig. functions
         """
-        LD = np.zeros(N-2)
-        DD = np.zeros(N)
-        for n in range(0, N):
-            J, M = (v[n, 0], v[n, 1])
-            DD[n] = 1/3 - (2/3)*(3*M**2-J*(J+1))/((2*J+3)*(2*J-1))
-            if v[n, 1] == v[n-2, 1] and v[n, 0] == v[n-2, 0]-2:
-                LD[n-2] = np.sqrt(((J+2)**2-M**2)*(J+1)**2-M**2) /\
-                    ((2*J+3)*np.sqrt((2*J+5)*(2*J+1)))
-        return sparse.diags([LD, DD, LD], [-2, 0, 2], format="csc")
+        cos2 = mmread("Jmax30\cos2.mtx")
+        sin2sin = mmread("Jmax30\sin2sin.mtx")
+        sin2cos = mmread("Jmax30\sin2cos.mtx")
+        return cos2.tocsc(), sin2sin.tocsc(), sin2cos.tocsc()
 
-    def intpropagation(N, v, psi0, P, observable, time):
+    def intpropagation(N, v, psi0, P, taup, observable1, observable2, time):
         """
         Using matrix exponential to apply a single kick.
         Then, the wave function is propagated in time.
         """
         energy = (1/(2*I))*v[:, 0]*(v[:, 0]+1)
-        interaction = linalg.expm(1j*P*costheta(N, v))
-        psiplus = interaction.dot(psi0)
+        psiplus = np.exp(-1j*energy*taup) * \
+            expm_multiply(-1j * P*(mats()[0]-mats()[2]), psi0)
+        psiplus = expm_multiply(-1j*P*(mats()[0]-mats()[1]), psiplus)
         wfafotime = np.exp(-1j*np.outer(energy, time))*psiplus[..., np.newaxis]
-        return np.real(np.multiply(np.conj(wfafotime), observable*wfafotime).sum(axis=0))
+        return np.real(np.multiply(np.conj(wfafotime), observable1*wfafotime).sum(axis=0)), \
+            np.real(np.multiply(np.conj(wfafotime),
+                                observable2*wfafotime).sum(axis=0))
 
     # The basis size
     N = (Jmax+1)**2
@@ -64,5 +63,7 @@ def single_state_prop(Jmax, J0M0, I, P, tdef):
     v = superindex(Jmax)
     psi0 = initialstate(J0M0, N, v)
     # Define the observable.
-    observable = costheta(N, v)
-    return intpropagation(N, v, psi0, P, observable, time)
+    observable1 = mats()[0]
+    observable2 = mats()[1]
+
+    return intpropagation(N, v, psi0, P, taup, observable1, observable2, time)
