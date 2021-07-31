@@ -3,7 +3,7 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 
-Jmax = 30
+Jmax = 50
 N = (Jmax+1)**2
 I, dalpha = (280208, 35)
 # Conversion factor between atomic time units and ps.
