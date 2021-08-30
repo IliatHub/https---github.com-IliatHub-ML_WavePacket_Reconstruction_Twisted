@@ -3,12 +3,12 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 
-Jmax = 50
+Jmax = 10
 N = (Jmax+1)**2
 I, dalpha = (280208, 35)
 # Conversion factor between atomic time units and ps.
 psauconv = 2.418884*10**(-5)
-E0, tau, taup = (0.037, 0.02/psauconv, 0.05/psauconv)
+E0, tau, taup = (0.02, 0.02/psauconv, 0.05/psauconv)
 P = 0.125*dalpha*math.sqrt(math.pi/math.log(16))*E0**2*tau
 print(P)
 # Define time grid in picoseconds

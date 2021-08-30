@@ -35,10 +35,12 @@ def single_state_prop(Jmax, J0M0, I, P, taup, tdef):
         """
         Load the matrix representations of the trig. functions
         """
-        cos2 = mmread("Jmax50\cos2.mtx")
-        sin2sin = mmread("Jmax50\sin2sin.mtx")
-        sin2cos = mmread("Jmax50\sin2cos.mtx")
-        return cos2.tocsc(), sin2sin.tocsc(), sin2cos.tocsc()
+        cos2 = mmread("Jmax10\cos2.mtx")
+        sin2sin = mmread("Jmax10\sin2sin.mtx")
+        sin2cos = mmread("Jmax10\sin2cos.mtx")
+        cos2phi = mmread("Jmax10\cos2phi.mtx")
+        cos = mmread("Jmax10\cos.mtx")
+        return cos2.tocsc(), sin2sin.tocsc(), sin2cos.tocsc(), cos2phi.tocsc(), cos.tocsc()
 
     def intpropagation(N, v, psi0, P, taup, observable1, observable2, time):
         """
@@ -64,6 +66,6 @@ def single_state_prop(Jmax, J0M0, I, P, taup, tdef):
     psi0 = initialstate(J0M0, N, v)
     # Define the observable.
     observable1 = mats()[0]
-    observable2 = mats()[1]
+    observable2 = mats()[3]
 
     return intpropagation(N, v, psi0, P, taup, observable1, observable2, time)
